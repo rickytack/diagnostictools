@@ -27,16 +27,10 @@ FORMS += \
 ## Either set the IDE_SOURCE_TREE when running qmake,
 ## or set the QTC_SOURCE environment variable, to override the default setting
 isEmpty(IDE_SOURCE_TREE): IDE_SOURCE_TREE = $$(QTC_SOURCE)
-isEmpty(IDE_SOURCE_TREE): IDE_SOURCE_TREE = "D:/Solomin/plugin_develop/qt-creator-opensource-src-4.2.1"
-# /home/solomin/plugin_develop/qt-creator-opensource-src-4.2.1
-#"D:/Solomin/plugin_develop/qt-creator-opensource-src-4.2.1"
 
 ## Either set the IDE_BUILD_TREE when running qmake,
 ## or set the QTC_BUILD environment variable, to override the default setting
 isEmpty(IDE_BUILD_TREE): IDE_BUILD_TREE = $$(QTC_BUILD)
-isEmpty(IDE_BUILD_TREE): IDE_BUILD_TREE = "D:/Solomin/plugin_develop/build-qtcreator-Qt_5_8_0_vc_2015_x32-Release"
-# /home/solomin/plugin_develop/qtcreator-4.2.1
-#"D:/Solomin/plugin_develop/build-qtcreator-Qt_5_8_0_vc_2015_x32-Release"
 
 ## uncomment to build plugin into user config directory
 ## <localappdata>/plugins/<ideversion>
