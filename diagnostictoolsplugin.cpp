@@ -96,6 +96,9 @@ void DiagnosticToolsPlugin::onRunControlStarted(ProjectExplorer::RunControl *rc)
     qDebug() << "DiagnosticToolsPlugin::onRunControlStarted";
     qDebug() << "PID:" << rc->applicationProcessHandle().pid();
     qDebug() <<"";
+    connect(m_runControlPtr,
+            &ProjectExplorer::RunControl::applicationProcessHandleChanged,
+            this, &DiagnosticToolsPlugin::onApplicationHandleChanged);
 }
 //================================================================================
 void DiagnosticToolsPlugin::onRunControlFinished(ProjectExplorer::RunControl *rc){
@@ -113,10 +116,27 @@ void DiagnosticToolsPlugin::onUpdateRunActions(){
     if(m_runControlPtr){
         qDebug() << "ProjectExplorer::ProjectExplorerPlugin::updateRunActions signal";
         qDebug() << "PID:" << m_runControlPtr->applicationProcessHandle().pid();
+//        if (m_runControlPtr->applicationProcessHandle().isValid()) {
+//            m_dataQueryEngine->setPid(m_runControlPtr->applicationProcessHandle().pid());
+//            m_dataQueryEngine->startDataQuery();
+//        } else {
+//            qDebug() << "Process handle is invalid";
+//        }
+        qDebug() <<"";
+    }
+}
+//================================================================================
+void DiagnosticToolsPlugin::onApplicationHandleChanged(){
 
+    qDebug() << "DiagnosticToolsPlugin::onApplicationHandleChanged";
+    qDebug() << "PID:" << m_runControlPtr->applicationProcessHandle().pid();
+    if (m_runControlPtr->applicationProcessHandle().isValid()) {
         m_dataQueryEngine->setPid(m_runControlPtr->applicationProcessHandle().pid());
         m_dataQueryEngine->startDataQuery();
+    } else {
+        qDebug() << "Process handle is invalid";
     }
+    qDebug() <<"";
 }
 //================================================================================
 void DiagnosticToolsPlugin::setConnections(){
