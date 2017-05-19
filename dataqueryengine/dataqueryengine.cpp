@@ -68,6 +68,31 @@ void DataQueryEngine::startDataQuery(){
     // check if files exist
     if(std::ifstream(stat_filepath) && std::ifstream("/proc/stat"))
         isStartSuccessful = true;
+#elif defined Q_OS_MAC
+    kern_return_t kret;
+
+    if((kret=task_for_pid(current_task(), m_currentPid, &task)) == KERN_SUCCESS) {
+        lastTime = mach_absolute_time();
+        lastCPU = 0;
+
+        task_absolutetime_info timeInfo;
+        mach_msg_type_number_t info_count = TASK_ABSOLUTETIME_INFO_COUNT;
+
+        if (KERN_SUCCESS == task_info(task,
+                                      TASK_ABSOLUTETIME_INFO,
+                                      (task_info_t)&timeInfo,
+                                      &info_count))
+        {
+            lastCPU = timeInfo.total_user+timeInfo.total_system;
+        }
+
+        isStartSuccessful = true;
+    }
+    else
+    {
+        qDebug() << "Attach to pid" << m_currentPid << "failed:" << mach_error_string(kret);
+    }
+
 #else
 #error "current OS is not supported"
 #endif
@@ -90,6 +115,7 @@ void DataQueryEngine::stopDataQuery(){
         numProcessors = 0;
     }
 #elif defined Q_OS_LINUX
+#elif defined Q_OS_MAC
 #else
 #error "current OS is not supported"
 #endif
@@ -196,6 +222,44 @@ void DataQueryEngine::getData(){
     emit ramDataUpdated(residentSet, vmUsage, 0);
     qDebug() << "residentSet" << residentSet;
     qDebug() << "vmUsage" << vmUsage;
+}
+#elif defined Q_OS_MAC
+
+
+void DataQueryEngine::getData(){
+    task_vm_info vm_info;
+    mach_msg_type_number_t info_count = TASK_VM_INFO_COUNT;
+
+    if (KERN_SUCCESS == task_info(task,
+                                  TASK_VM_INFO,
+                                  (task_info_t)&vm_info,
+                                  &info_count))
+    {
+        emit ramDataUpdated(
+                    vm_info.resident_size / 1024.0,
+                    vm_info.internal / 1024.0,
+                    vm_info.resident_size_peak / 1024.0 );
+    }
+
+    task_absolutetime_info timeInfo;
+    info_count = TASK_ABSOLUTETIME_INFO_COUNT;
+    if (KERN_SUCCESS == task_info(task,
+                                  TASK_ABSOLUTETIME_INFO,
+                                  (task_info_t)&timeInfo,
+                                  &info_count
+                                  ))
+    {
+        quint64 now = mach_absolute_time();
+        quint64 cpuTime = timeInfo.total_user+timeInfo.total_system;
+
+        double cpu = (double)(cpuTime - lastCPU) / (now-lastTime) * 100.0; // in percents
+
+        lastCPU = cpuTime;
+        lastTime = now;
+
+        emit cpuDataUpdated(cpu);
+    }
+
 }
 #else
 #error "current OS is not supported"
