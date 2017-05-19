@@ -85,10 +85,8 @@ private: // fields
     pstat last_usage;
 #elif defined Q_OS_MAC
     task_t task;
-    mach_timebase_info_data_t timeBase;
     quint64 lastCPU;
     quint64 lastTime;
-
 #else
 #error "current OS is not supported"
 #endif

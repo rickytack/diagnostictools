@@ -69,28 +69,30 @@ void DataQueryEngine::startDataQuery(){
     if(std::ifstream(stat_filepath) && std::ifstream("/proc/stat"))
         isStartSuccessful = true;
 #elif defined Q_OS_MAC
+    kern_return_t kret;
 
-    if(mach_timebase_info( &timeBase ) == KERN_SUCCESS) {
-        if(task_for_pid(mach_task_self(), m_currentPid, &task) == KERN_SUCCESS) {
-            lastTime = (quint64)mach_absolute_time()*timeBase.numer/timeBase.denom;
-            lastCPU = 0;
+    if((kret=task_for_pid(current_task(), m_currentPid, &task)) == KERN_SUCCESS) {
+        lastTime = mach_absolute_time();
+        lastCPU = 0;
 
-            task_basic_info info;
-            mach_msg_type_number_t info_count = TASK_BASIC_INFO_COUNT;
+        task_absolutetime_info timeInfo;
+        mach_msg_type_number_t info_count = TASK_ABSOLUTETIME_INFO_COUNT;
 
-            if (KERN_SUCCESS == task_info(task,
-                                          TASK_BASIC_INFO,
-                                          (task_info_t)&info,
-                                          &info_count))
-            {
-                lastCPU =
-                        (info.system_time.seconds+info.user_time.seconds)*1000 +
-                        info.system_time.microseconds+info.user_time.microseconds;
-            }
-
-            isStartSuccessful = true;
+        if (KERN_SUCCESS == task_info(task,
+                                      TASK_ABSOLUTETIME_INFO,
+                                      (task_info_t)&timeInfo,
+                                      &info_count))
+        {
+            lastCPU = timeInfo.total_user+timeInfo.total_system;
         }
+
+        isStartSuccessful = true;
     }
+    else
+    {
+        qDebug() << "Attach to pid" << m_currentPid << "failed:" << mach_error_string(kret);
+    }
+
 #else
 #error "current OS is not supported"
 #endif
@@ -222,31 +224,40 @@ void DataQueryEngine::getData(){
     qDebug() << "vmUsage" << vmUsage;
 }
 #elif defined Q_OS_MAC
+
+
 void DataQueryEngine::getData(){
-    task_basic_info info;
-    mach_msg_type_number_t info_count = TASK_BASIC_INFO_COUNT;
+    task_vm_info vm_info;
+    mach_msg_type_number_t info_count = TASK_VM_INFO_COUNT;
 
     if (KERN_SUCCESS == task_info(task,
-                                  TASK_BASIC_INFO,
-                                  (task_info_t)&info,
+                                  TASK_VM_INFO,
+                                  (task_info_t)&vm_info,
                                   &info_count))
     {
-        quint64 now = (quint64)mach_absolute_time()*timeBase.numer/timeBase.denom;
+        emit ramDataUpdated(
+                    vm_info.resident_size / 1024.0,
+                    vm_info.internal / 1024.0,
+                    vm_info.resident_size_peak / 1024.0 );
+    }
 
-        quint64 cpuTime =
-                (info.system_time.seconds+info.user_time.seconds)*1000 +
-                info.system_time.microseconds+info.user_time.microseconds;
+    task_absolutetime_info timeInfo;
+    info_count = TASK_ABSOLUTETIME_INFO_COUNT;
+    if (KERN_SUCCESS == task_info(task,
+                                  TASK_ABSOLUTETIME_INFO,
+                                  (task_info_t)&timeInfo,
+                                  &info_count
+                                  ))
+    {
+        quint64 now = mach_absolute_time();
+        quint64 cpuTime = timeInfo.total_user+timeInfo.total_system;
 
-        double cpu = (cpuTime - lastCPU) / (now-lastTime) * 1E8; // 1E8 because cpuTime is in milliseconds , lastTime is in nanoseconds and we want percents (*100)
+        double cpu = (double)(cpuTime - lastCPU) / (now-lastTime) * 100.0; // in percents
 
         lastCPU = cpuTime;
         lastTime = now;
 
         emit cpuDataUpdated(cpu);
-        emit ramDataUpdated(
-                    info.resident_size / 1024.0,
-                    info.virtual_size / 1024.0,
-                    0);
     }
 
 }
