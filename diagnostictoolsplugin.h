@@ -36,6 +36,7 @@ private slots:
     void onRunControlStarted(ProjectExplorer::RunControl *rc);
     void onRunControlFinished(ProjectExplorer::RunControl *rc);
     void onUpdateRunActions();
+    void onApplicationHandleChanged();
 
 private: // methods
     void setConnections();
