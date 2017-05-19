@@ -68,6 +68,29 @@ void DataQueryEngine::startDataQuery(){
     // check if files exist
     if(std::ifstream(stat_filepath) && std::ifstream("/proc/stat"))
         isStartSuccessful = true;
+#elif defined Q_OS_MAC
+
+    if(mach_timebase_info( &timeBase ) == KERN_SUCCESS) {
+        if(task_for_pid(mach_task_self(), m_currentPid, &task) == KERN_SUCCESS) {
+            lastTime = (quint64)mach_absolute_time()*timeBase.numer/timeBase.denom;
+            lastCPU = 0;
+
+            task_basic_info info;
+            mach_msg_type_number_t info_count = TASK_BASIC_INFO_COUNT;
+
+            if (KERN_SUCCESS == task_info(task,
+                                          TASK_BASIC_INFO,
+                                          (task_info_t)&info,
+                                          &info_count))
+            {
+                lastCPU =
+                        (info.system_time.seconds+info.user_time.seconds)*1000 +
+                        info.system_time.microseconds+info.user_time.microseconds;
+            }
+
+            isStartSuccessful = true;
+        }
+    }
 #else
 #error "current OS is not supported"
 #endif
@@ -90,6 +113,7 @@ void DataQueryEngine::stopDataQuery(){
         numProcessors = 0;
     }
 #elif defined Q_OS_LINUX
+#elif defined Q_OS_MAC
 #else
 #error "current OS is not supported"
 #endif
@@ -196,6 +220,35 @@ void DataQueryEngine::getData(){
     emit ramDataUpdated(residentSet, vmUsage, 0);
     qDebug() << "residentSet" << residentSet;
     qDebug() << "vmUsage" << vmUsage;
+}
+#elif defined Q_OS_MAC
+void DataQueryEngine::getData(){
+    task_basic_info info;
+    mach_msg_type_number_t info_count = TASK_BASIC_INFO_COUNT;
+
+    if (KERN_SUCCESS == task_info(task,
+                                  TASK_BASIC_INFO,
+                                  (task_info_t)&info,
+                                  &info_count))
+    {
+        quint64 now = (quint64)mach_absolute_time()*timeBase.numer/timeBase.denom;
+
+        quint64 cpuTime =
+                (info.system_time.seconds+info.user_time.seconds)*1000 +
+                info.system_time.microseconds+info.user_time.microseconds;
+
+        double cpu = (cpuTime - lastCPU) / (now-lastTime) * 1E8; // 1E8 because cpuTime is in milliseconds , lastTime is in nanoseconds and we want percents (*100)
+
+        lastCPU = cpuTime;
+        lastTime = now;
+
+        emit cpuDataUpdated(cpu);
+        emit ramDataUpdated(
+                    info.resident_size / 1024.0,
+                    info.virtual_size / 1024.0,
+                    0);
+    }
+
 }
 #else
 #error "current OS is not supported"

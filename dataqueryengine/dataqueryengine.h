@@ -21,6 +21,9 @@
 #include <unistd.h>
 #include <iostream>
 #include <fstream>
+#elif defined Q_OS_MAC
+#include <mach/mach.h>
+#include <mach/mach_time.h>
 #else
 #error "current OS is not supported"
 #endif
@@ -80,6 +83,12 @@ private: // fields
         long unsigned int cpu_total_time;
     };
     pstat last_usage;
+#elif defined Q_OS_MAC
+    task_t task;
+    mach_timebase_info_data_t timeBase;
+    quint64 lastCPU;
+    quint64 lastTime;
+
 #else
 #error "current OS is not supported"
 #endif
