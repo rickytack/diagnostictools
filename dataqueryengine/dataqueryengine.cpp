@@ -212,7 +212,7 @@ void DataQueryEngine::getData(){
     // refresh last usage value
     last_usage = cur_pstat;
 
-    qDebug() << "total:" << total;
+    //qDebug() << "total:" << total;
     emit cpuDataUpdated(total);
 
     //calculate ram
@@ -220,8 +220,8 @@ void DataQueryEngine::getData(){
     double vmUsage     = vsize / 1024.0;
     double residentSet = rss * pageSizeKb;
     emit ramDataUpdated(residentSet, vmUsage, 0);
-    qDebug() << "residentSet" << residentSet;
-    qDebug() << "vmUsage" << vmUsage;
+    //qDebug() << "residentSet" << residentSet;
+    //qDebug() << "vmUsage" << vmUsage;
 }
 #elif defined Q_OS_MAC
 
