@@ -35,7 +35,6 @@ public:
 private slots:
     void onRunControlStarted(ProjectExplorer::RunControl *rc);
     void onRunControlFinished(ProjectExplorer::RunControl *rc);
-    void onUpdateRunActions();
     void onApplicationHandleChanged();
 
 private: // methods
@@ -48,8 +47,9 @@ private: // feilds
     //DiagnosticToolsOutputPane *m_outputPane;
     DiagnosticToolsFactory *m_diagnosticToolsFactory;
 
-    ProjectExplorer::RunControl* m_runControlPtr = NULL;
+    ProjectExplorer::RunControl* m_runControlPtr = nullptr;
 };
 
 } // namespace Internal
 } // namespace DiagnosticTools
+
