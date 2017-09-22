@@ -107,36 +107,22 @@ void DiagnosticToolsPlugin::onRunControlFinished(ProjectExplorer::RunControl *rc
     qDebug() << "DiagnosticToolsPlugin::onRunControlFinished";
     qDebug() <<"";
 
-    m_runControlPtr = NULL;
+    m_runControlPtr = nullptr;
     m_dataQueryEngine->stopDataQuery();
-}
-//================================================================================
-void DiagnosticToolsPlugin::onUpdateRunActions(){
-
-    if(m_runControlPtr){
-        qDebug() << "ProjectExplorer::ProjectExplorerPlugin::updateRunActions signal";
-        qDebug() << "PID:" << m_runControlPtr->applicationProcessHandle().pid();
-//        if (m_runControlPtr->applicationProcessHandle().isValid()) {
-//            m_dataQueryEngine->setPid(m_runControlPtr->applicationProcessHandle().pid());
-//            m_dataQueryEngine->startDataQuery();
-//        } else {
-//            qDebug() << "Process handle is invalid";
-//        }
-        qDebug() <<"";
-    }
 }
 //================================================================================
 void DiagnosticToolsPlugin::onApplicationHandleChanged(){
 
     qDebug() << "DiagnosticToolsPlugin::onApplicationHandleChanged";
-    qDebug() << "PID:" << m_runControlPtr->applicationProcessHandle().pid();
-    if (m_runControlPtr->applicationProcessHandle().isValid()) {
+
+    if (m_runControlPtr && m_runControlPtr->applicationProcessHandle().isValid()){
         m_dataQueryEngine->setPid(m_runControlPtr->applicationProcessHandle().pid());
         m_dataQueryEngine->startDataQuery();
-    } else {
+    }
+    else{
         qDebug() << "Process handle is invalid";
     }
-    qDebug() <<"";
+    qDebug() << "";
 }
 //================================================================================
 void DiagnosticToolsPlugin::setConnections(){
@@ -150,9 +136,6 @@ void DiagnosticToolsPlugin::setConnections(){
       &ProjectExplorer::ProjectExplorerPlugin::runControlFinished,
             this, &DiagnosticToolsPlugin::onRunControlFinished);
 
-    connect(ProjectExplorer::ProjectExplorerPlugin::instance(),
-            &ProjectExplorer::ProjectExplorerPlugin::updateRunActions,
-            this, &DiagnosticToolsPlugin::onUpdateRunActions);
 }
 
 } // namespace Internal
