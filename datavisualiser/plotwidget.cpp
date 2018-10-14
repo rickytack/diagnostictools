@@ -24,9 +24,8 @@ void PlotWidget::addValue(quint32 value){
     valuesList.append(value);
 
     // refresh maxValue
-    maxValue = valuesList.first();
-    foreach (quint32 value, valuesList)
-        if(value > maxValue) maxValue = value;
+    auto maxElementIt = std::max_element(valuesList.begin(), valuesList.end());
+    if(maxElementIt != valuesList.end()) maxValue = *maxElementIt;
 
     update();
 }
