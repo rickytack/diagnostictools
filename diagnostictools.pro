@@ -68,3 +68,6 @@ include($$IDE_SOURCE_TREE/src/qtcreatorplugin.pri)
 #exportForms.input = PUBLIC_FORMS
 #QMAKE_EXTRA_COMPILERS += exportForms
 
+DISTFILES += \
+    LICENSE
+
